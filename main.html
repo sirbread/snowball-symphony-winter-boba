@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>snowball symphony!</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: linear-gradient(to bottom, #87CEEB, #FFFFFF);
+            height: 100vh;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .snow {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 100px;
+            background: #FFF;
+            box-shadow: 0 -10px 20px rgba(0, 0, 0, 0.1);
+            pointer-events: none;
+        }
+
+        .snowflake {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #FFF;
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0.8;
+            animation: fall linear infinite;
+        }
+
+        @keyframes fall {
+            from {
+                transform: translateY(-100%);
+            }
+            to {
+                transform: translateY(100vh);
+            }
+        }
+
+        .snowball {
+            position: absolute;
+            border-radius: 50%;
+            background: #FFF;
+            pointer-events: none;
+            border: 1px solid #000000;
+            z-index: 10;
+        }
+
+        .splat {
+            position: absolute;
+            background: url('splat.png') no-repeat center center;
+            background-size: contain;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 2.5s ease;
+            z-index: 11;
+        }
+
+        .snowflake-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            z-index: 1;
+        }
+
+        .interactive-snowflake {
+            width: 200px;
+            height: 200px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .interactive-snowflake:hover {
+            transform: scale(1.2);
+        }
+
+        .clickable-image {
+            position: absolute;
+            bottom: 110px;
+            left: 20px;
+            width: 150px;
+            height: auto;
+            cursor: pointer;
+            z-index: 15;
+        }
+    </style>
+</head>
+<body>
+    <div class="snowflake-container">
+        <img src="snowflake.png" class="interactive-snowflake" id="note-a" alt="Snowflake A">
+        <img src="snowflake.png" class="interactive-snowflake" id="note-b" alt="Snowflake B">
+        <img src="snowflake.png" class="interactive-snowflake" id="note-c" alt="Snowflake C">
+        <img src="snowflake.png" class="interactive-snowflake" id="note-d" alt="Snowflake D">
+        <img src="snowflake.png" class="interactive-snowflake" id="note-e" alt="Snowflake E">
+        <img src="snowflake.png" class="interactive-snowflake" id="note-f" alt="Snowflake F">
+        <img src="snowflake.png" class="interactive-snowflake" id="note-g" alt="Snowflake G">
+    </div>
+
+    <img src="click.png" class="clickable-image" id="clickable-image" alt="Clickable Image">
+
+    <div class="snow"></div>
+
+    <script>
+        let isSnowballActive = false;
+        let snowball = null;
+        let snowballSize = 30;
+
+        function createSnowflake() {
+            const snowflake = document.createElement('div');
+            snowflake.className = 'snowflake';
+
+            const startX = Math.random() * window.innerWidth;
+            snowflake.style.left = `${startX}px`;
+            snowflake.style.top = `-${Math.random() * 20}px`;
+
+            const duration = 5 + Math.random() * 3;
+            snowflake.style.animationDuration = `${duration}s`;
+
+            const drift = Math.random() * 50;
+            snowflake.style.animation = `fall ${duration}s linear forwards`;
+            snowflake.style.transform = `translateX(${drift}px)`;
+
+            document.body.appendChild(snowflake);
+
+            setTimeout(() => {
+                snowflake.remove();
+            }, duration * 1000);
+        }
+
+        setInterval(createSnowflake, 200);
+
+        document.body.addEventListener('click', (event) => {
+            if (event.clientY > window.innerHeight - 100 && !isSnowballActive) {
+                const clickableImage = document.getElementById('clickable-image');
+                if (clickableImage) {
+                    clickableImage.style.display = 'none';
+                }
+
+                isSnowballActive = true;
+                snowball = document.createElement('div');
+                snowball.className = 'snowball';
+                snowball.style.width = `${snowballSize}px`;
+                snowball.style.height = `${snowballSize}px`;
+                snowball.style.left = `${event.clientX - snowballSize / 2}px`;
+                snowball.style.top = `${event.clientY - snowballSize / 2}px`;
+                document.body.appendChild(snowball);
+
+                const updatePosition = (e) => {
+                    snowball.style.left = `${e.clientX - snowballSize / 2}px`;
+                    snowball.style.top = `${e.clientY - snowballSize / 2}px`;
+
+                    if (e.clientY > window.innerHeight - 100) {
+                        snowballSize += 0.5;
+                        snowball.style.width = `${snowballSize}px`;
+                        snowball.style.height = `${snowballSize}px`;
+                    }
+                };
+
+                document.body.addEventListener('mousemove', updatePosition);
+
+                document.body.addEventListener('click', () => {
+                    if (isSnowballActive) {
+                        document.body.removeEventListener('mousemove', updatePosition);
+                        snowball.style.transition = 'transform 0.5s ease, opacity 0.5s ease';
+                        snowball.style.transform = 'scale(0)';
+                        snowball.style.opacity = '0';
+
+                        setTimeout(() => {
+                            const splat = document.createElement('div');
+                            splat.className = 'splat';
+                            splat.style.width = `${snowballSize * 2.3}px`;
+                            splat.style.height = `${snowballSize * 2.3}px`;
+                            splat.style.left = `${parseInt(snowball.style.left) + snowballSize / 2 - (snowballSize * 2.3 / 2)}px`;
+                            splat.style.top = `${parseInt(snowball.style.top) + snowballSize / 2 - (snowballSize * 2.3 / 2)}px`;
+                            document.body.appendChild(splat);
+
+                            setTimeout(() => {
+                                splat.style.transition = 'opacity 90ms ease';
+                                splat.style.opacity = '1';
+                            }, 10);
+
+                            setTimeout(() => {
+                                splat.style.transition = 'opacity 2500ms ease';
+                                splat.style.opacity = '0';
+                                setTimeout(() => {
+                                    splat.remove();
+                                }, 2500);
+                            }, 2500);
+                        }, 400);
+
+                        setTimeout(() => {
+                            snowball.remove();
+                            snowball = null;
+                            snowballSize = 30;
+                            isSnowballActive = false;
+                        }, 500);
+                    }
+                }, { once: true });
+            }
+        });
+
+        const notes = {
+            "note-a": "a4.mp3",
+            "note-b": "b4.mp3",
+            "note-c": "c4.mp3",
+            "note-d": "d4.mp3",
+            "note-e": "e4.mp3",
+            "note-f": "f4.mp3",
+            "note-g": "g4.mp3",
+        };
+
+        function playNote(event) {
+            const snowflake = event.target;
+            const noteId = snowflake.id;
+
+            snowflake.src = "snowflake-sing.png";
+
+            const audio = new Audio(notes[noteId]);
+            audio.play();
+
+            audio.addEventListener("ended", () => {
+                snowflake.src = "snowflake.png";
+            });
+        }
+
+        document.querySelectorAll(".interactive-snowflake").forEach((snowflake) => {
+            snowflake.addEventListener("click", playNote);
+        });
+    </script>
+</body>
+</html>
